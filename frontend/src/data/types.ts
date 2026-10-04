@@ -1,11 +1,13 @@
 /** 纯前端数据层的公共类型：与全栈版后端返回的结构保持一致，换回后端时页面不用改。 */
 
+export type EntryValue = string | number | boolean | null
+
 export type EntryRow = {
   id: number
   status: string
   pending: boolean
   abnormal: boolean
-  [field: string]: string | number | boolean
+  [field: string]: EntryValue
 }
 
 export type ModuleMeta = {

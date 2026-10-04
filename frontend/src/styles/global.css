@@ -35,3 +35,41 @@ body { margin: 0; background: #f6f8fb; color: #1f2937; }
 .error-text { color: #b42318; }
 .status-legend { display: flex; flex-wrap: wrap; gap: 12px; margin: 0 0 10px; font-size: 12px; color: var(--muted); }
 .legend-item { background: #eef2f7; border-radius: 999px; padding: 2px 10px; }
+.ok-text { color: #067647; }
+.primary-link { color: #067647; font-weight: 600; }
+.stat-alert { color: #b42318; }
+
+/* 跟踪支架：专责方阵、堆叠单元格、冲突标记 */
+.duty-bar { display: flex; align-items: flex-end; gap: 12px; background: #fff; border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; margin-bottom: 12px; }
+.duty-bar select { padding: 4px 8px; min-width: 160px; }
+.duty-hint { font-size: 12px; color: var(--muted); }
+.cell-stack { display: inline-flex; flex-direction: column; gap: 2px; }
+.cell-sub { font-size: 11px; color: var(--muted); }
+.cell-bad { color: #b42318; font-weight: 600; }
+.cell-warn { color: #b54708; font-weight: 600; }
+.cell-conflict { border-bottom: 2px wavy #b54708; }
+.conflict-flag { display: inline-block; margin-left: 4px; font-size: 11px; color: #b54708; background: #fef3c7; border-radius: 4px; padding: 0 6px; }
+.lube-due { color: #b54708; margin-left: 4px; }
+.event-badge { display: inline-block; min-width: 34px; text-align: center; border-radius: 999px; padding: 1px 8px; background: #eef2f7; font-size: 12px; }
+.event-badge.open { background: #fee4e2; color: #b42318; }
+.review-badge { display: inline-block; margin-left: 6px; font-size: 11px; color: #b54708; background: #fef3c7; border-radius: 999px; padding: 1px 8px; }
+.tracker-table tbody tr { cursor: pointer; }
+.row-open { background: #f0f6ff; }
+.row-warn { background: #fffaeb; }
+
+/* 详情面板 */
+.detail-panel { margin-top: 14px; background: #fff; border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; }
+.detail-head { display: flex; justify-content: space-between; align-items: center; }
+.detail-head h3 { margin: 0; font-size: 15px; }
+.detail-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 8px; }
+.detail-block h4 { margin: 0 0 6px; font-size: 13px; color: #334155; }
+.sub-table th, .sub-table td { padding: 5px 8px; font-size: 12px; }
+.history-list { margin: 0; padding-left: 18px; font-size: 12px; }
+.history-list li.mismatch { color: #b54708; }
+
+/* 巡视侧复核台账 */
+.review-ledger { margin-top: 18px; }
+.ledger-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+.ledger-head h3 { margin: 0; font-size: 15px; }
+.ledger-recon { font-size: 12px; color: #067647; }
+.ledger-recon.recon-bad { color: #b42318; font-weight: 600; }

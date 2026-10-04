@@ -1,6 +1,26 @@
 import { MODULE_BY_KEY } from '@/data/modules'
-import { allRows, listRows, resetRows, saveRows } from '@/data/local-store'
+import {
+  TRACKER_DEVIATION_EVENTS_KEY,
+  TRACKER_PATROL_REVIEWS_KEY,
+  TRACKER_SCHEMA_KEY,
+  TRACKER_SCHEMA_VERSION,
+  allRows,
+  listRows,
+  resetRows,
+  saveRows,
+  setMeta,
+} from '@/data/local-store'
 import type { ActionResult, EntryRow, ModuleMeta, OverviewResult, PageResult } from '@/data/types'
+import { changeDriveMotor, registerDeviation, resetAndLubricate } from './tracker-service'
+
+// 跟踪支架专域的读取与复核动作从本地服务统一出口，页面仍只依赖 local-service。
+export {
+  confirmPatrolReview,
+  listDeviationEvents,
+  listPatrolReviews,
+  listTrackers,
+  reconciliationGap,
+} from './tracker-service'
 
 // 会写进数据的「往回走」动作：命中就把这条记录标成异常态，看板上能一眼看出来。
 const NEGATIVE_ACTIONS = ['撤销', '作废', '拒绝', '驳回', '停用', '忽略', '下线', '回滚']
@@ -28,8 +48,32 @@ export function listEntries(key: string, filters: Record<string, string> = {}): 
   return { items: matched, total: matched.length, page: 1, size: matched.length }
 }
 
-export function runAction(key: string, id: number, action: string): ActionResult {
+export function runAction(
+  key: string,
+  id: number,
+  action: string,
+  options: { responsibleArray?: string; payload?: string } = {},
+): ActionResult {
   const meta = moduleMeta(key)
+
+  // 跟踪支架走专域事务：复位/润滑合成一次动作，通用状态翻转不允许碰它。
+  if (key === 'tracker') {
+    if (action === '登记偏差') {
+      return registerDeviation(id, options.payload ?? '')
+    }
+    if (action === '复位并润滑' || action === '复位限位') {
+      return resetAndLubricate(id)
+    }
+    if (action === '完成润滑') {
+      // 旧入口保留为护栏：跳过复位直接润滑，限位报警时当场拦截并指出缺步骤。
+      return resetAndLubricate(id, { skipReset: true })
+    }
+    if (action === '更换驱动机构') {
+      return changeDriveMotor(id, options.payload ?? '', options.responsibleArray ?? '')
+    }
+    return { ok: false, message: `${meta.entity}没有登记「${action}」这个动作` }
+  }
+
   const target = meta.actionTargets[action]
   if (!target) {
     return { ok: false, message: `${meta.entity}没有登记「${action}」这个动作` }
@@ -58,6 +102,12 @@ export function runAction(key: string, id: number, action: string): ActionResult
 
 export function resetModule(key: string): PageResult {
   resetRows(key)
+  // 跟踪支架的两本台账与结构版本跟着支架数据一起回到示例态，不能只重置半套。
+  if (key === 'tracker') {
+    resetRows(TRACKER_DEVIATION_EVENTS_KEY)
+    resetRows(TRACKER_PATROL_REVIEWS_KEY)
+    setMeta(TRACKER_SCHEMA_KEY, TRACKER_SCHEMA_VERSION)
+  }
   return listEntries(key)
 }
 
@@ -85,9 +135,8 @@ export function downloadEntries(key: string): void {
 }
 
 export function loadOverview(): OverviewResult {
-  const rows = allRows()
   const modules = [...MODULE_BY_KEY.values()].map((meta) => {
-    const entries = rows[meta.key] ?? []
+    const entries = listRows(meta.key)
     return {
       name: meta.name,
       created: entries.length,
