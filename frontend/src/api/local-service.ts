@@ -1,6 +1,12 @@
 import { MODULE_BY_KEY } from '@/data/modules'
 import { allRows, listRows, resetRows, saveRows } from '@/data/local-store'
-import type { ActionResult, EntryRow, ModuleMeta, OverviewResult, PageResult } from '@/data/types'
+import type { ActionPayload, ActionResult, EntryRow, ModuleMeta, OverviewResult, PageResult } from '@/data/types'
+import {
+  closeReviewBatch,
+  listTrackers,
+  performResetLube,
+  registerDeviation,
+} from './tracker-service'
 
 // 会写进数据的「往回走」动作：命中就把这条记录标成异常态，看板上能一眼看出来。
 const NEGATIVE_ACTIONS = ['撤销', '作废', '拒绝', '驳回', '停用', '忽略', '下线', '回滚']
@@ -24,11 +30,29 @@ export function filterRows(rows: EntryRow[], filters: Record<string, string>): E
 }
 
 export function listEntries(key: string, filters: Record<string, string> = {}): PageResult {
-  const matched = filterRows(listRows(key), filters)
+  // 支架读取时顺手做一次旧记录兼容（拆混写格、补润滑字段），不改盘，落库时才持久化。
+  const source = key === 'tracker' ? listTrackers() : listRows(key)
+  const matched = filterRows(source, filters)
   return { items: matched, total: matched.length, page: 1, size: matched.length }
 }
 
-export function runAction(key: string, id: number, action: string): ActionResult {
+export function runAction(key: string, id: number, action: string, payload: ActionPayload = {}): ActionResult {
+  // 跟踪支架：复位与润滑合成一次动作，走支架专责服务（整笔事务、专责校验、台账回写）。
+  if (key === 'tracker') {
+    if (action === '复位润滑') {
+      return performResetLube(id, payload)
+    }
+    if (action === '登记偏差') {
+      return registerDeviation(id, payload)
+    }
+  }
+  // 巡视检查：支架复位复核台账的「确认完成」要两边同时销账，走专责服务。
+  if (key === 'patrol' && action === '确认完成') {
+    const row = listRows(key).find((item) => Number(item.id) === id)
+    if (row && String(row['台账类别']) === '支架复位复核') {
+      return closeReviewBatch(id)
+    }
+  }
   const meta = moduleMeta(key)
   const target = meta.actionTargets[action]
   if (!target) {

@@ -82,7 +82,7 @@ import {
 import type { EntryRow } from '@/data/types'
 
 const meta = moduleMeta('patrol')
-const columns = ["巡视单号", "巡视路线", "巡视人员", "巡视日期", "检查项数", "异常项数", "巡视时长", "巡视状态"]
+const columns = meta.fields
 const actions = ["开始巡视", "提交复核", "确认完成"]
 const statuses = ["待巡视", "巡视中", "待复核", "已完成"]
 const stats = [{"label": "今日巡视单", "value": 0}, {"label": "巡视中记录", "value": 0}, {"label": "发现异常项", "value": 0}]
